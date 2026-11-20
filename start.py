@@ -96,7 +96,7 @@ def build_mayaboti_config() -> tuple[Path, dict]:
     raw_allow = _first_env("TELEGRAM_ALLOW_FROM", "ADMIN_ID")
     allow_from = [item.strip() for item in raw_allow.split(",") if item.strip()]
 
-    raw_port = _first_env("PORT", "SERVER_PORT") or "8080"
+    raw_port = _first_env("MAYABOTI_WEBUI_PORT", "PORT", "SERVER_PORT") or "8080"
     try:
         port = int(raw_port)
     except ValueError:
