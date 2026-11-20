@@ -1,0 +1,2 @@
+-e ./src
+python-dotenv

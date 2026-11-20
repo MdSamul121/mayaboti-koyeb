@@ -1,0 +1,37 @@
+{
+  "name": "mayaboti",
+  "short_name": "mayaboti",
+  "description": "mayaboti AI assistant",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "color_scheme_dark": {
+    "background_color": "#303030",
+    "theme_color": "#303030"
+  },
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/brand/mayaboti_apple_touch.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/brand/mayaboti_icon_192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/brand/mayaboti_icon_512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/brand/mayaboti_icon_maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

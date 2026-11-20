@@ -1,0 +1,48 @@
+x-common-config: &common-config
+  build:
+    context: .
+    dockerfile: Dockerfile
+    args:
+      MAYABOTI_CHANNELS: ${MAYABOTI_CHANNELS:-whatsapp}
+  environment:
+    MAYABOTI_DOCKER_BOOTSTRAP: "1"
+    MAYABOTI_WEB_TOKEN: ${MAYABOTI_WEB_TOKEN:-}
+  volumes:
+    - ~/.mayaboti:/home/mayaboti/.mayaboti
+  cap_drop:
+    - ALL
+  # Entrypoint uses these to fix bind-mount ownership and drop to the mayaboti user.
+  cap_add:
+    - CHOWN
+    - SETGID
+    - SETUID
+  # Prevent the non-root process from regaining capabilities through setuid
+  # binaries or file capabilities left inside the container image.
+  security_opt:
+    - no-new-privileges:true
+
+services:
+  mayaboti-gateway:
+    container_name: mayaboti-gateway
+    <<: *common-config
+    command: ["gateway"]
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:18790:18790
+      - 8765:8765
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+
+  mayaboti-cli:
+    <<: *common-config
+    profiles:
+      - cli
+    command: ["status"]
+    stdin_open: true
+    tty: true
