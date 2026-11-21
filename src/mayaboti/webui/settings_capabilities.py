@@ -91,16 +91,25 @@ def _image_generation_provider_rows(
         spec = find_by_name(name)
         provider_config = getattr(config.providers, name, None)
         image_provider = get_image_gen_provider(name, provider_config)
+        is_keyless_free = name == "pollinations"
         configured = (
-            provider_configured_for_settings(spec, provider_config, oauth_status)
-            if spec is not None and provider_config is not None
-            else bool(provider_config and provider_config.api_base)
+            True
+            if is_keyless_free
+            else (
+                provider_configured_for_settings(spec, provider_config, oauth_status)
+                if spec is not None and provider_config is not None
+                else bool(provider_config and provider_config.api_base)
+            )
         )
         rows.append(
             {
                 "name": name,
-                "label": spec.label if spec is not None else getattr(provider_config, "display_name", None) or name,
-                "uses_images_api": spec is None or name == "custom",
+                "label": (
+                    "Pollinations (Free)"
+                    if is_keyless_free
+                    else (spec.label if spec is not None else getattr(provider_config, "display_name", None) or name)
+                ),
+                "uses_images_api": False if is_keyless_free else (spec is None or name == "custom"),
                 "configured": configured,
                 "auth_type": "oauth" if spec is not None and spec.is_oauth else "api_key",
                 "api_key_hint": mask_secret_hint(getattr(provider_config, "api_key", None)),

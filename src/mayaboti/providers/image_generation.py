@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
 from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 from loguru import logger
@@ -2031,6 +2032,52 @@ class ModelScopeImageGenerationClient(ImageGenerationProvider):
         return images
 
 
+class PollinationsImageGenerationClient(ImageGenerationProvider):
+    """Free, keyless image generation via Pollinations.ai."""
+
+    provider_name = "pollinations"
+    model_options = ("flux", "turbo")
+    _ASPECT_DIMENSIONS = {
+        "1:1": (1024, 1024),
+        "16:9": (1344, 768),
+        "9:16": (768, 1344),
+        "4:3": (1152, 896),
+        "3:4": (896, 1152),
+        "3:2": (1248, 832),
+        "2:3": (832, 1248),
+    }
+
+    def _default_base_url(self) -> str:
+        return "https://image.pollinations.ai"
+
+    async def generate(
+        self,
+        *,
+        prompt: str,
+        model: str,
+        reference_images: list[str] | None = None,
+        aspect_ratio: str | None = None,
+        image_size: str | None = None,
+    ) -> GeneratedImageResponse:
+        del reference_images, image_size
+        clean_prompt = prompt.strip()
+        if not clean_prompt:
+            raise ImageGenerationError("prompt is required for image generation")
+        selected_model = (model or self.model_options[0]).strip() or self.model_options[0]
+        width, height = self._ASPECT_DIMENSIONS.get((aspect_ratio or "").strip(), (1024, 1024))
+        encoded_prompt = quote(clean_prompt, safe="")
+        url = (
+            f"{self.api_base}/prompt/{encoded_prompt}"
+            f"?width={width}&height={height}&model={quote(selected_model, safe='')}&nologo=true"
+        )
+        data_url = await _download_image_data_url(url, proxy=self.proxy)
+        return GeneratedImageResponse(
+            images=[data_url],
+            content="",
+            raw={"provider": self.provider_name, "model": selected_model, "url": url},
+        )
+
+
 register_image_gen_provider(AIHubMixImageGenerationClient)
 register_image_gen_provider(CodexImageGenerationClient)
 register_image_gen_provider(CustomImageGenerationClient)
@@ -2042,3 +2089,4 @@ register_image_gen_provider(OpenRouterImageGenerationClient)
 register_image_gen_provider(StepFunImageGenerationClient)
 register_image_gen_provider(ZhipuImageGenerationClient)
 register_image_gen_provider(ModelScopeImageGenerationClient)
+register_image_gen_provider(PollinationsImageGenerationClient)

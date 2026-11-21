@@ -143,7 +143,12 @@ def build_mayaboti_config() -> tuple[Path, dict]:
             "port": 18790,
         },
         "tools": {
-            "restrictToWorkspace": _parse_bool(os.getenv("RESTRICT_TO_WORKSPACE"), default=True)
+            "restrictToWorkspace": _parse_bool(os.getenv("RESTRICT_TO_WORKSPACE"), default=True),
+            "imageGeneration": {
+                "enabled": True,
+                "provider": "pollinations",
+                "model": "flux",
+            },
         },
     }
 
