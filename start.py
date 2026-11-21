@@ -58,6 +58,7 @@ def build_mayaboti_config() -> tuple[Path, dict]:
     nvidia_key = _first_env("NVIDIA_API_KEY")
     gemini_key = _first_env("GOOGLE_API_KEY_5", "GOOGLE_API_KEY_11", "GEMINI_API_KEY", "GEMINI_API_KEY_2")
     hf_key = _first_env("HUGGINGFACE_API_KEY", "HF_TOKEN")
+    pollinations_key = _first_env("POLLINATIONS_API_KEY")
 
     providers: dict[str, dict] = {}
     if groq_key:
@@ -70,6 +71,12 @@ def build_mayaboti_config() -> tuple[Path, dict]:
         providers["gemini"] = {"apiKey": gemini_key}
     if hf_key:
         providers["huggingface"] = {"apiKey": hf_key}
+    if pollinations_key:
+        providers["pollinations"] = {
+            "apiKey": pollinations_key,
+            "apiBase": "https://gen.pollinations.ai/v1",
+            "displayName": "Pollinations",
+        }
 
     selected_model, selected_provider = _select_model_and_provider(providers)
 
@@ -85,6 +92,14 @@ def build_mayaboti_config() -> tuple[Path, dict]:
         fallback_candidates.append({"model": "openrouter/free", "provider": "openrouter"})
     if "nvidia" in providers:
         fallback_candidates.append({"model": "minimaxai/minimax-m3.1-flash", "provider": "nvidia"})
+    if "pollinations" in providers:
+        fallback_candidates.extend([
+            {"model": "openai/gpt-5.4-nano", "provider": "pollinations"},
+            {"model": "deepseek/deepseek-v4.1-flash", "provider": "pollinations"},
+            {"model": "minimax/minimax-m3.1-flash", "provider": "pollinations"},
+            {"model": "meta/llama-3.3-70b-instruct", "provider": "pollinations"},
+            {"model": "z-ai/glm-5.3-flash", "provider": "pollinations"},
+        ])
 
     fallback_models = [
         candidate
