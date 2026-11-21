@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import binascii
+import os
 import re
 from abc import ABC, abstractmethod
 from contextlib import suppress
@@ -153,6 +154,7 @@ async def _download_image_data_url(
     *,
     proxy: str | None = None,
     transport: httpx.AsyncBaseTransport | None = None,
+    headers: dict[str, str] | None = None,
 ) -> str:
     def check_proxy_target(target: str) -> tuple[bool, str]:
         # The configured provider proxy owns final DNS and egress.
@@ -165,6 +167,7 @@ async def _download_image_data_url(
             transport=None if proxy else PinnedDNSAsyncTransport(inner=transport),
             timeout=_DEFAULT_TIMEOUT_S,
             trust_env=False,
+            headers=headers,
         ) as client:
             async with open_redirected_get(
                 client, url, check_target=check_proxy_target if proxy else None,
@@ -2066,11 +2069,20 @@ class PollinationsImageGenerationClient(ImageGenerationProvider):
         selected_model = (model or self.model_options[0]).strip() or self.model_options[0]
         width, height = self._ASPECT_DIMENSIONS.get((aspect_ratio or "").strip(), (1024, 1024))
         encoded_prompt = quote(clean_prompt, safe="")
-        url = (
-            f"{self.api_base}/prompt/{encoded_prompt}"
-            f"?width={width}&height={height}&model={quote(selected_model, safe='')}&nologo=true"
-        )
-        data_url = await _download_image_data_url(url, proxy=self.proxy)
+        api_key = (self.api_key or os.environ.get("POLLINATIONS_API_KEY") or "").strip()
+        if api_key:
+            url = (
+                f"https://gen.pollinations.ai/image/{encoded_prompt}"
+                f"?model={quote(selected_model, safe='')}&width={width}&height={height}"
+            )
+            req_headers = {"Authorization": f"Bearer {api_key}"}
+        else:
+            url = (
+                f"{self.api_base}/prompt/{encoded_prompt}"
+                f"?width={width}&height={height}&model={quote(selected_model, safe='')}&nologo=true"
+            )
+            req_headers = None
+        data_url = await _download_image_data_url(url, proxy=self.proxy, headers=req_headers)
         return GeneratedImageResponse(
             images=[data_url],
             content="",
